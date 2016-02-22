@@ -69,7 +69,7 @@ ClassDecl.prototype.transform = function(env) {
     var xs = 'function ' + this.C + '()' + '{}';
     xs += this.C + '.prototype = new ' + this.S + '();'
     for (var i = 0 ; i < this.xs.length ; i++) {
-        xs += this.C + '.' + this.xs[i] + ' = [];';
+        xs += this.C + '.prototype.' + this.xs[i] + ' = [];';
     }
     return xs;
 }
