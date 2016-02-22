@@ -1,6 +1,7 @@
 'use strict';
 
 function trans(ast) {
+    
     return ast.transform();
     //throw new TODO('implement translation for ' + ast.constructor.name);
 }
@@ -65,13 +66,19 @@ VarDecl.prototype.transform = function(env) {
 }
 ClassDecl.prototype.transform = function(env) {
     //function Ref() {this.prototype = Obj; this.val = val;}
-    env.classes[this.C] = this.S;
-    var xs = 'function ' + this.C + '()' + '{}';
+    var xs = '';
+    xs += 'function ' + this.C + '()' + '{}';
+    if (this.C in env.classes)
+        xs += 'throw new Error("class has already been defined");';
     xs += this.C + '.prototype = new ' + this.S + '();'
     for (var i = 0 ; i < this.xs.length ; i++) {
         xs += this.C + '.prototype.' + this.xs[i] + ' = [];';
     }
+    env.classes[this.C] = this.S;
     return xs;
+}
+VarAssign.prototype.transform = function(env) {
+    return this.x + '=' + this.e.transform(env) + ';';
 }
 InstVarAssign.prototype.transform = function(env) {
     return 'this.' + this.x + '=' + this.e.transform(env) + ';';
@@ -98,6 +105,7 @@ MethodDecl.prototype.transform = function(env) {
 
 //---------------------Env use to record class relationship and temportyt instance in class----------------
 function Obj(){}
+Obj.prototype._init = function() {};
 
 function Env() {
     this.currClass;
