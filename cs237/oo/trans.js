@@ -171,7 +171,7 @@ Num.prototype = new Obj();
 
 function Str(x){
     this.val = x
-    this.__add = function(x) { return new Num(this.val + x.val); }
+    this.__add = function(x) { return new Str(this.val + x.val); }
     this.__les = function(x) { return this.val < x.val? new True(): new False(); }
     this.__gre = function(x) { return this.val > x.val? new True(): new False(); }
 }
