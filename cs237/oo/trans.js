@@ -111,12 +111,12 @@ MethodDecl.prototype.transform = function(env) {
         this.m = opMap[this.m];
     var result = this.C + '.prototype.' + '_' + this.m + ' = function' + '('+this.xs.toString()+')' + '{';
     var tempResult = '';
-    //--------------use try catch to deal with block----------------------------
+    
     for (var i = 0 ; i < this.ss.length ; i++) {
         tempResult += this.ss[i].transform(env) + ';';
     }
     if (env.haveBlock === true) {
-        tempResult = 'try {' + tempResult + '} catch (e) {return e.call(this,[])}';
+        tempResult = 'try {' + tempResult + '} catch (e) {return e.call(this,[])}';  //use try catch to deal with block
     }
     env.haveBlock = false;
     for (var i = 0 ; i < env.currInst.length ; i++) {
@@ -143,7 +143,7 @@ BlockLit.prototype.transform = function(env) {
     return '(function(' + this.xs.toString() + ') {' + result + '})';
     //+ this.ss.transform(env) + '}';
 }
-//---------------------Env use to record class relationship and temportyt instance in class----------------
+//---------------------Env use to record class relationship and temporary instance in class----------------
 function Obj(x){
     this.val = x;
     this.__equ = function(x) { return this.val === x.val? new True(): new False(); }
