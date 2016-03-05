@@ -31,7 +31,6 @@ Clause.prototype.rewrite = function(subst) {
         args.push(this.args[i].rewrite(subst));
     }
     return new Clause(this.name, args);
-  //throw new TODO('Clause.prototype.rewrite not implemented');
 };
 
 Var.prototype.rewrite = function(subst) {
@@ -46,7 +45,20 @@ Var.prototype.rewrite = function(subst) {
 // -----------------------------------------------------------------------------
 
 Subst.prototype.unify = function(term1, term2) {
-  throw new TODO('Subst.prototype.unify not implemented');
+    if (term1 instanceof Var) {
+        return (this.lookup(term2.name) === undefined)? this.bind(term1, term2): this.bind(term1, this.lookup(term2.name));
+    }
+    else if (term2 instanceof Var) {
+        return (this.lookup(term1.name) === undefined)? this.bind(term2, term1): this.bind(term2, this.lookup(term1.name));
+    }
+    else {
+        if (term1.name !== term2.name || term1.args.length !== term2.args.length)
+            return undefined;
+        for (var i = 0 ; i < term1.args.length ; i++) {
+            this.unify(term1.args[i], term2.args[i]);
+        }
+        return this;
+    }
 };
 
 // -----------------------------------------------------------------------------
