@@ -2,28 +2,29 @@
 // Part I: Rule.prototype.makeCopyWithFreshVarNames() and
 //         {Clause, Var}.prototype.rewrite(subst)
 // -----------------------------------------------------------------------------
+Rule.counter = 0;
 
 Rule.prototype.makeCopyWithFreshVarNames = function() {
-    var map = [];
-    var head = this.head.makeCopy(map);
+    var id = Rule.counter++;
+    var head = this.head.makeCopyWithFreshVarNames(id);
     var body = [];
     for (var i = 0 ; i < this.body.length ; i++) {
-        body.push(this.body[i].makeCopy(map));
+        body.push(this.body[i].makeCopyWithFreshVarNames(id));
     }
     return new Rule(head, body);
 };
 
-Clause.prototype.makeCopy = function(map) {
+Clause.prototype.makeCopyWithFreshVarNames = function(id) {
     var args = [];
     for(var i = 0 ; i < this.args.length ; i++) {
-        var oldName = this.args[i].name;
-        //better way to create a new name?
-        var newName = oldName + '.';
-        args.push(new Var(newName));
-        map[oldName] = newName;
+        args.push(this.args[i].makeCopyWithFreshVarNames(id));
     }
     return new Clause(this.name, args);
 };
+
+Var.prototype.makeCopyWithFreshVarNames = function(id) {
+    return new Var(this.name + '.' + id);
+}
 
 Clause.prototype.rewrite = function(subst) {
     var args = [];
@@ -43,29 +44,112 @@ Var.prototype.rewrite = function(subst) {
 // -----------------------------------------------------------------------------
 // Part II: Subst.prototype.unify(term1, term2)
 // -----------------------------------------------------------------------------
+// unification is to create substitutions
+
 
 Subst.prototype.unify = function(term1, term2) {
     if (term1 instanceof Var) {
-        return (this.lookup(term2.name) === undefined)? this.bind(term1, term2): this.bind(term1, this.lookup(term2.name));
+        if (this.lookup(term1) !== undefined)
+            return undefined;
+        return this.bind(term1.rewrite(this), term2.rewrite(this));
     }
     else if (term2 instanceof Var) {
-        return (this.lookup(term1.name) === undefined)? this.bind(term2, term1): this.bind(term2, this.lookup(term1.name));
+        if (this.lookup(term2) !== undefined)
+            return undefined;
+        return this.bind(term2.rewrite(this), term1.rewrite(this));
     }
     else {
         if (term1.name !== term2.name || term1.args.length !== term2.args.length)
             return undefined;
         for (var i = 0 ; i < term1.args.length ; i++) {
-            this.unify(term1.args[i], term2.args[i]);
+            if (this.unify(term1.args[i].rewrite(this), term2.args[i].rewrite(this)) === undefined)
+                return undefined;
+        }
+        //
+        //if (arguments.length == 2) {
+        for (var key in this.bindings) {
+            var dest = this.lookup(key);
+            while (dest.constructor.name == "Var") {
+                var next = this.lookup(dest);
+                if (next == undefined) break;
+                dest = next;
+            }
+            this.bind(key, dest);
+        }
+        //}
+        for (var key in this.bindings) {
+            var result = this.lookup(key);
+            if (result.constructor.name == "Clause") {
+                this.bind(key, result.rewrite(this));
+            }
         }
         return this;
     }
 };
+
 
 // -----------------------------------------------------------------------------
 // Part III: Program.prototype.solve()
 // -----------------------------------------------------------------------------
 
 Program.prototype.solve = function() {
-  throw new TODO('Program.prototype.solve not implemented');
+    var iter = new Iterator(this.rules, this.query);
+    return iter;
 };
+
+function Iterator(rules,query) {
+    this.rules = rules;
+    this.query;
+    this.subst;
+    this.stack = [new Stack(query, new Subst(), -1)];
+    this.rIndex;
+};
+
+Iterator.prototype.next = function() {
+    var subst = this.search();
+    return subst;
+}
+
+Iterator.prototype.search = function() {
+    while (this.stack.length > 0) {
+        this.query = this.stack[0].query;
+        this.subst = this.stack[0].subst;
+        this.rIndex = this.stack[0].rIndex;
+        this.stack = this.stack.slice(1);
+        var j = this.rIndex + 1;
+        while (j < this.rules.length) {
+        //for (var j = this.rIndex + 1; j < this.rules.length ; j++) {
+            if (this.rules[j].head.name === this.query[0].name) {
+                var newRule = this.rules[j].makeCopyWithFreshVarNames();
+                var newSubst = this.subst.clone();
+                if (newSubst.unify(this.query[0].rewrite(this.subst), newRule.head) !== undefined) {
+                    //if (newSubst.unify(newRule.head, this.query[0]) !== undefined) {
+                    this.stack = [new Stack(this.query, this.subst, j)].concat(this.stack);
+                    this.query = newRule.body.rewrite(newSubst).concat(this.query.slice(1));
+                    this.subst = newSubst;
+                    if (this.query.length === 0) {
+                        return this.subst;
+                    }
+                    else {
+                        j = 0;
+                        continue;
+                    }
+                }
+            }
+            j++;
+        }
+    }
+}
+    
+function Stack(query, subst, rIndex) {
+    this.query = query;
+    this.subst = subst;
+    this.rIndex = rIndex;
+}
+
+Array.prototype.rewrite = function(subst) {
+    for (var i = 0 ; i <  this.length ; i ++)
+        this[i] = this[i].rewrite(subst);
+    return this;
+}
 
