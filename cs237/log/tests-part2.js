@@ -52,6 +52,19 @@ tests(
           '                  new Clause("f", [new Clause("a", []), new Var("X")]));',
     expected: new Subst().bind("X", new Clause("a", []))
                          .bind("Y", new Clause("a", []))
-  }
+  },
+  {
+      name: 'unify(Clause, Clause) (6/5)',
+      code: 'new Subst().unify(new Clause("f", [new Var("Y"), new Var("X")]),\n' +
+      '                  new Clause("f", [new Var("X"), new Clause("a", [])]));',
+      expected: new Subst().bind("X", new Clause("a", []))
+      .bind("Y", new Clause("a", []))
+      },
+  {
+      name: 'occur check',
+      code: 'new Subst().unify(new Clause("data", [new Var("Y"), new Var("Y")]),\n' +
+      '                  new Clause("data", [new Var("X"), new Clause("P", [new Var("X")])]));',
+      expected: undefined
+      }
 );
 
