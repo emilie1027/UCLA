@@ -37,9 +37,29 @@ Clause.prototype.rewrite = function(subst) {
 Var.prototype.rewrite = function(subst) {
     if (subst.lookup(this.name) === undefined)
         return this;
-    else
-        return subst.lookup(this.name);
+    else {
+        var curr = this;
+        while (subst.lookup(curr.name) !== undefined) {
+            curr = subst.lookup(curr.name);
+        }
+        return curr;
+        //return subst.lookup(this.name);
+    }
 };
+
+Clause.prototype.contain = function(term) {
+    for (var i = 0 ; i < this.args.length ; i++) {
+        if (this.args[i].contain(term))
+            return true;
+    }
+    return false;
+}
+
+Var.prototype.contain = function(term) {
+    if (this.name === term.name)
+        return true;
+    return false;
+}
 
 // -----------------------------------------------------------------------------
 // Part II: Subst.prototype.unify(term1, term2)
@@ -48,13 +68,17 @@ Var.prototype.rewrite = function(subst) {
 
 
 Subst.prototype.unify = function(term1, term2) {
-    if (term1 instanceof Var) {
-        if (this.lookup(term1) !== undefined)
+    if (term1 instanceof Var && term2 instanceof Var) {
+
+        return this.bind(term1.rewrite(this), term2.rewrite(this));
+    }
+    else if (term1 instanceof Var) {
+        if (term2.rewrite(this).contain(term1))
             return undefined;
         return this.bind(term1.rewrite(this), term2.rewrite(this));
     }
     else if (term2 instanceof Var) {
-        if (this.lookup(term2) !== undefined)
+        if (term1.rewrite(this).contain(term2))
             return undefined;
         return this.bind(term2.rewrite(this), term1.rewrite(this));
     }
@@ -65,21 +89,23 @@ Subst.prototype.unify = function(term1, term2) {
             if (this.unify(term1.args[i].rewrite(this), term2.args[i].rewrite(this)) === undefined)
                 return undefined;
         }
-        //
-        //if (arguments.length == 2) {
         for (var key in this.bindings) {
             var dest = this.lookup(key);
-            while (dest.constructor.name == "Var") {
-                var next = this.lookup(dest);
+            var track = [];
+            while (dest instanceof Var) {
+                var next = this.lookup(dest.name);
                 if (next == undefined) break;
+                else if (this.lookup(next.name) === next) {
+                    dest = key;
+                    break;
+                }
                 dest = next;
             }
             this.bind(key, dest);
         }
-        //}
         for (var key in this.bindings) {
             var result = this.lookup(key);
-            if (result.constructor.name == "Clause") {
+            if (result instanceof Clause) {
                 this.bind(key, result.rewrite(this));
             }
         }
