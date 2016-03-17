@@ -12,14 +12,15 @@ Program.prototype.transform = function() {
     var str = '';
     for (var i = 0 ; i < arr.length - 1 ; i++)
         str += arr[i].transform(env) + ';';
-    str += arr[arr.length - 1].transform(env);
+    str += arr[arr.length - 1].transform(env) + '.__get();';
     return str;
 }
 
 ExpStmt.prototype.transform = function(env) {
     var result = '';
     //return 'try{' + this.e.transform(env) + '.__get()} catch(e){if(e1.message === "e1"){} else{}}'
-    return this.e.transform(env)  + '.__get();';
+    //return this.e.transform(env)  + '.__get();';
+    return this.e.transform(env);
 }
 
 //-----------------------------------value----------------------------------------
@@ -60,8 +61,10 @@ This.prototype.transform = function(env) {
     return 'this';
 }
 Send.prototype.transform = function(env) {
-    if (this.m === 'call')
-        return 'Block.call(' + this.erecv.transform(env) + ', [' + this.es.transform(env) + '])';
+    //if (this.m === 'call') {
+    //    if (this.es.length !== 0) return this.erecv.transform(env) + '.' + '_' +this.m + '(this, '+ this.es.transform(env) +')';
+    //    else return this.erecv.transform(env) + '.' + '_' +this.m + '(this)';
+    //}
     return this.erecv.transform(env) + '.' + '_' +this.m + '('+ this.es.transform(env) +')';
 }
 SuperSend.prototype.transform = function(env) {
@@ -111,12 +114,12 @@ MethodDecl.prototype.transform = function(env) {
         this.m = opMap[this.m];
     var result = this.C + '.prototype.' + '_' + this.m + ' = function' + '('+this.xs.toString()+')' + '{';
     var tempResult = '';
-    
+    //--------------use try catch to deal with block----------------------------
     for (var i = 0 ; i < this.ss.length ; i++) {
         tempResult += this.ss[i].transform(env) + ';';
     }
     if (env.haveBlock === true) {
-        tempResult = 'try {' + tempResult + '} catch (e) {return e.call(this,[])}';  //use try catch to deal with block
+        tempResult = 'try {' + tempResult + '} catch (e) {console.log(e); return e.call(this,[]);}';
     }
     env.haveBlock = false;
     for (var i = 0 ; i < env.currInst.length ; i++) {
@@ -132,18 +135,20 @@ BlockLit.prototype.transform = function(env) {
     var arr = this.ss;
     for (var i = 0 ; i < arr.length - 1 ; i++)
         result += arr[i].transform(env) + ';';
-    if (arr[arr.length - 1] instanceof ExpStmt)
-        result += 'return ' + arr[arr.length - 1].transform(env);
-    else if (arr[arr.length - 1] instanceof Return) {
-        result += arr[arr.length - 1].transform(env);
-        return '(function(' + this.xs.toString() + ') {var e = function(){' + result + '}; throw e;})';
+    if (arr.length > 0) {
+        if (arr[arr.length - 1] instanceof ExpStmt)
+            result += 'return ' + arr[arr.length - 1].transform(env) + ';';
+        else if (arr[arr.length - 1] instanceof Return) {
+            result += arr[arr.length - 1].transform(env);
+            return '(new Block(this, function(' + this.xs.toString() + ') {var e = function(){' + result + '}; throw e;}))';
+        }
+        else
+            result += arr[arr.length - 1].transform(env) + 'return new Null();';
     }
-    else
-        result += 'return new Null();';
-    return '(function(' + this.xs.toString() + ') {' + result + '})';
-    //+ this.ss.transform(env) + '}';
+    return '(new Block(this, function(' + this.xs.toString() + ') {' + result + '}))';
 }
-//---------------------Env use to record class relationship and temporary instance in class----------------
+
+//---------------------Env use to record class relationship and temportyt instance in class----------------
 function Obj(x){
     this.val = x;
     this.__equ = function(x) { return this.val === x.val? new True(): new False(); }
@@ -158,7 +163,7 @@ Obj.prototype.transform = function(env) {
 }
 
 function Num(x){
-    this.val = x
+    this.val = x;
     this.__add = function(x) { return new Num(this.val + x.val); }
     this.__sub = function(x) { return new Num(this.val - x.val); }
     this.__mul = function(x) { return new Num(this.val * x.val); }
@@ -170,7 +175,7 @@ function Num(x){
 Num.prototype = new Obj();
 
 function Str(x){
-    this.val = x
+    this.val = x;
     this.__add = function(x) { return new Str(this.val + x.val); }
     this.__les = function(x) { return this.val < x.val? new True(): new False(); }
     this.__gre = function(x) { return this.val > x.val? new True(): new False(); }
@@ -189,20 +194,13 @@ True.prototype = new Bool();
 function False(){this.val = false}
 False.prototype = new Bool();
 
-function Block() {
-    var value = this.apply(this, arguments[0]);
-    if (typeof value === 'number')
-        return new Num(value);
-    else if (typeof value === 'string')
-        return new Str(value);
-    else if (value === null)
-        return new Null();
-    else if (value === true)
-        return new True();
-    else if (value === false)
-        return new False();
-    else
-        throw new Error("result is invalid");
+function Block(env, func) {
+    this.env = env;
+    this.func = func;
+}
+
+Block.prototype._call = function() {
+    return this.func.apply(this.env, Array.prototype.slice.call(arguments, 0));
 }
 
 function Env() {
