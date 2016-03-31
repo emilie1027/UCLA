@@ -1,0 +1,25 @@
+1. Computer systems have no nearby bounds on composition (no physical limits) because of two reasons. One is that they are mostly digital which release them from noise restriction. The other is that they are controlled by software.
+2. Rapid development of technology (grow exponentially) leads to two consequences. One is that designers place less emphasis on performance analysis and mainly focus on redesign??. The other is that usability and related qualities is always ragged.
+
+-dynamic loading
+loading library when running
+
+calling convention
+caller, register EAX, ECX, EDX are caller-saved
+callee, rest of registers are callee-saved
+
+1
+shared library - start of the program, 
+static library - linkage
+dynamically loadable - calling
+
+2.
+clear parameter - caller
+saving restarts not used in the subroutine linkage - callee
+
+3.
+system call invocation mechanism, exception propagation 
+
+
+4.
+second-system effect

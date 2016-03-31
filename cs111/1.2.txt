@@ -1,0 +1,11 @@
+subroutine
+
+linkage editing -> load module <- static library
+shared libraries -> stub? dynamic? 
+DLL dlopen
+
+serialization: synchronization in operating system
+
+ABI is the binding of an API to an ISA. (system call using ABI)
+
+backwards compatible means enabling treating a new protocol version as an old protocol version. 
