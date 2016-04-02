@@ -5,13 +5,13 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
+#include <string.h>
 
 #define BUF_SIZE 8192
 
 void unix_error(char *msg) /* Unix-style error */
 {
     perror(msg);
-    fprintf(stderr, "%s\n", msg);
 }
 
 
@@ -31,33 +31,26 @@ int main(int argc, char *argv[]) {
         int length;
         if (strstr(argv[i], "--input=") != NULL) {
             length = strlen(argv[i]) - strlen("--input=");
-            //memcpy (input, argv[i], length); /* note strlen or strcpy is looking for ‘\0’ */
-            memcpy(input, &argv[i][0] + 8, length);
+            memcpy(input, argv[i] + strlen("--input="), length);
             input[length] =  '\0';
         }
         else if (strstr(argv[i], "--output=") != NULL) {
             length = strlen(argv[i]) - strlen("--output=");
-            //memcpy (output, argv[i], length);
-            memcpy (output, &argv[i][0] + strlen("--output="), length);
+            memcpy (output, argv[i] + strlen("--output="), length);
             output[length] =  '\0';
-
         }
-        else if (strcmp(argv[i], "--segfault") == 0) {
+        else if (strcmp(argv[i], "--segfault") == 0)
             segfault = 1;
-        }
         else if (strcmp(argv[i], "--catch") == 0)
             catch = 1;
     }
     
-    int fd0, fd1;
-    char *buffer;
     if (segfault) {
-        buffer = (void *)-1;
+        char *bug = NULL;
+        *bug = 'c';
     }
-    else {
-        buffer = malloc(BUF_SIZE);
-    }
-    
+    int fd0, fd1;
+    char *buffer = malloc(BUF_SIZE);
     if ((fd0 = open(input, O_RDONLY)) < 0) {
         unix_error("failed to open input");
         exit(1);

@@ -5,15 +5,13 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
-#include <string.h>
+#include <getopt.h>
 
 #define BUF_SIZE 8192
-
-void unix_error(char *msg) /* Unix-style error */
-{
-    perror(msg);
-}
-
+#define INPUT 'i'
+#define OUTPUT 'o'
+#define SEGFAULT 's'
+#define CATCH 'c'
 
 void signal_handler(int signum) {
     signal(SIGSEGV, signal_handler);
@@ -22,57 +20,77 @@ void signal_handler(int signum) {
 }
 
 int main(int argc, char *argv[]) {
-    char input [BUF_SIZE];
-    char output [BUF_SIZE];
-    int segfault = 0;
-    int catch = 0;
-    int i;
-    for (i = 1; i < argc; i++) {
-        int length;
-        if (strstr(argv[i], "--input=") != NULL) {
-            length = strlen(argv[i]) - strlen("--input=");
-            memcpy(input, argv[i] + strlen("--input="), length);
-            input[length] =  '\0';
+    
+    char *infile = malloc(BUF_SIZE);
+    char *outfile = malloc(BUF_SIZE);
+    
+    static struct option options[] = {
+        {"input", required_argument, NULL, INPUT},
+        {"output", required_argument, NULL, OUTPUT},
+        {"segfault", no_argument, NULL, SEGFAULT},
+        {"catch", no_argument, NULL, CATCH},
+        {0,0,0,0}
+    };
+    
+    int ret = 0;
+    while ((ret = getopt_long(argc, argv, "", options, NULL)) != -1) {
+        //fprintf(stderr, "ret: %c, optind: %d, optarg: %s\n", ret, optind, optarg);
+        
+        switch(ret) {
+            case SEGFAULT:
+            {
+                char *bug = NULL;
+                *bug = 'c';
+                break;
+            }
+            case CATCH:
+            {
+                signal(SIGSEGV, signal_handler);
+                break;
+            }
+            case INPUT:
+            {
+                infile = optarg;
+                break;
+            }
+            case OUTPUT:
+            {
+                outfile = optarg;
+                break;
+            }
+            default:
+                break;
         }
-        else if (strstr(argv[i], "--output=") != NULL) {
-            length = strlen(argv[i]) - strlen("--output=");
-            memcpy (output, argv[i] + strlen("--output="), length);
-            output[length] =  '\0';
-        }
-        else if (strcmp(argv[i], "--segfault") == 0)
-            segfault = 1;
-        else if (strcmp(argv[i], "--catch") == 0)
-            catch = 1;
     }
-    
     int fd0, fd1;
-    char *buffer;
-    
-    if ((fd0 = open(input, O_RDONLY)) < 0) {
-        unix_error("failed to open input");
+    char *buffer = malloc(BUF_SIZE);
+    if ((fd0 = open(infile, O_RDONLY)) < 0) {
+        perror("failed to open input");
         exit(1);
     }
-    if ((fd1 = creat(output, 0666)) < 0) {
-        unix_error("failed to open output");
+    else {
+        close(0);
+        dup2(0, fd0);
+        close(fd0);
+    }
+    
+    if ((fd1 = creat(outfile, 0666)) < 0) {
+        perror("failed to open output");
         exit(2);
     }
-    if (segfault) {
-        buffer = (void *)-1;
-    }
     else {
-        buffer = malloc(BUF_SIZE);
+        close(1);
+        dup(fd1);
+        close(fd1);
     }
-    if (catch) {
-        signal(SIGSEGV, signal_handler);
-    }
+    
     int n;
-    while((n = read(fd0, buffer, BUF_SIZE)) > 0) {
-        write(fd1, buffer, n); 
+    while((n = read(0, buffer, BUF_SIZE)) > 0) {
+        write(1, buffer, n);
     }
-    close(fd0);
-    close(fd1);
+    close(0);
+    close(1);
     free(buffer);
     exit(0);
 }
-
 
