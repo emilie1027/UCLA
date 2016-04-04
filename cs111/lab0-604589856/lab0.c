@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     int ret = 0;
     int fault = 0;
     while ((ret = getopt_long(argc, argv, "", options, NULL)) != -1) {
-        //fprintf(stderr, "ret: %c, optind: %d, optarg: %s\n", ret, optind, optarg);
+//        fprintf(stderr, "ret: %c, optind: %d, optarg: %s\n", ret, optind, optarg);
         
         switch(ret) {
             case SEGFAULT:
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
                 break;
             }
             default:
-                break;
+                _exit(4);
         }
     }
     if (fault) {
