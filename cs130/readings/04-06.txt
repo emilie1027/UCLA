@@ -1,0 +1,28 @@
+CODE COMPLETE
+
+-Chapter 1
+software construction mainly includes design, coding, debugging, integration and unit testing. This is the essential topic discussed in this book.q:q:wq
+
+-Chapter 3
+prerequisites for software programming. They are important because without them, the average cost for fixing defects will be large.
+
+When to use iterative approach and when sequential approach?
+When the project is straightforward, not challenging, cost a lot, have clear goal and ways to do it, then use sequential approach, otherwise use iterative one.
+
+Kind of software
+There are mainly 3 kinds of software, business system, mission-critical system, and embedded life-critical systems.
+
+Problem definition requisites
+raise the right problem, target to the right problem, thinking from the user side instead of programming side
+
+requirement requisites
+right requirement helps directly target to the right problem, enable yourself to deal with requirement changing: checklist, cost knowledge, change-control procedure, dump, keep eye on business case.
+
+
+SOFTWARE ENGINEERING
+-Chapter1
+
+-Chapter4
+1. a monthly report should be generated at the end of the month, including cost of drug, each clinic
+2. allow each clinic to input their drug consuming
+3. access to report should be restricted to authorized users

@@ -1,0 +1,13 @@
+Code Complete
+-Importance of Metaphor in Software engineering
+1.It's heuristic process. Intriguing developers to direct to the right destination.
+2.It helps construction preparation and narrows down difference between small and large software development.
+
+-Coding Collaboration
+1. Pair Programming
+It decreases programming time, increases defect detection rates.
+
+2. Formal Inspection
+has well-defined roles, very efficient in inspecting errors.
+
+3. Alternatives, like walking-through
