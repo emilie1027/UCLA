@@ -6,7 +6,7 @@ check:
 	diff input.txt output.txt
 	./lab0 --segfault --catch || ([ $$? -eq 3 ] && echo "Return code for catch OK")
 	./lab0 --input=nonexistantfile.txt || ([ $$? -eq 1 ] && echo "correctly handling of nonexistent input file OK")
-	./lab0 --output=
+	./lab0 --input=somefile.txt
 
 clean:
 	rm lab0 *.txt

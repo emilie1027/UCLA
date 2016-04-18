@@ -1,0 +1,8 @@
+1. API integration - access shopping data
+2. data collection and utilization
+3. Make use of additional information
+
+
+1. What roles do Spring and Maven play in this system? Which part of SRS should mention that?
+2. Do we need to build our own database?
+3. Where do we deploy our web service?
